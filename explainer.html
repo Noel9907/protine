@@ -1,0 +1,668 @@
+<title>Shadows into Molecules</title>
+
+<style>
+  :root {
+    --paper:  #E9EDF0;
+    --card:   #FFFFFF;
+    --ink:    #121920;
+    --muted:  #5E6E7B;
+    --faint:  #8A99A5;
+    --ice:    #10808F;
+    --amber:  #B26A16;
+    --line:   #D0D8DE;
+    --grid:   rgba(18, 25, 32, 0.06);
+
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #0B1015; --card: #141C24; --ink: #E4ECF2;
+      --muted: #8698A6; --faint: #6A7C8A; --ice: #4FC3D9;
+      --amber: #E8A33D; --line: #223039; --grid: rgba(228,236,242,0.07);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0B1015; --card: #141C24; --ink: #E4ECF2;
+    --muted: #8698A6; --faint: #6A7C8A; --ice: #4FC3D9;
+    --amber: #E8A33D; --line: #223039; --grid: rgba(228,236,242,0.07);
+  }
+  :root[data-theme="light"] {
+    --paper: #E9EDF0; --card: #FFFFFF; --ink: #121920;
+    --muted: #5E6E7B; --faint: #8A99A5; --ice: #10808F;
+    --amber: #B26A16; --line: #D0D8DE; --grid: rgba(18,25,32,0.06);
+  }
+
+  body {
+    background: var(--paper); color: var(--ink);
+    font-family: var(--sans); font-size: 17px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 700px; margin: 0 auto; padding: 52px 24px 80px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  section { padding: 26px 0; }
+  section + section { border-top: 1px solid var(--line); }
+
+  .step {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: var(--serif); font-size: clamp(2.1rem, 7.5vw, 3.4rem);
+    line-height: 1.02; font-weight: 400; letter-spacing: -0.02em;
+    text-wrap: balance; margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: clamp(1.3rem, 4vw, 1.6rem); font-weight: 640;
+    letter-spacing: -0.015em; text-wrap: balance; margin-bottom: 12px;
+    line-height: 1.25;
+  }
+
+  .lede {
+    font-size: 1.1rem; line-height: 1.5; color: var(--muted);
+    text-wrap: pretty; max-width: 44ch;
+  }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  p { max-width: 58ch; text-wrap: pretty; }
+  p + p { margin-top: 13px; }
+  p.big { font-size: 1.12rem; }
+
+  strong { font-weight: 640; }
+  .say { color: var(--ice); font-weight: 640; }
+
+  /* numbered problem list */
+  ol.probs { list-style: none; display: flex; flex-direction: column; gap: 18px; margin-top: 20px; }
+  ol.probs li { display: grid; grid-template-columns: 26px 1fr; gap: 14px; }
+  ol.probs .n {
+    font-family: var(--mono); font-size: 0.8rem; color: var(--amber);
+    font-variant-numeric: tabular-nums; padding-top: 4px;
+  }
+  ol.probs .t { font-weight: 640; margin-bottom: 2px; }
+  ol.probs .d { color: var(--muted); font-size: 0.95rem; max-width: 52ch; }
+
+  /* figures */
+  figure {
+    background: var(--card); border: 1px solid var(--line); border-radius: 3px;
+    margin: 22px 0 0; overflow: hidden;
+  }
+  figcaption {
+    padding: 12px 16px; font-size: 0.86rem; color: var(--muted);
+    border-top: 1px solid var(--line); max-width: none;
+  }
+
+  .triptych { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .cell { padding: 14px 12px 10px; }
+  .cell + .cell { border-left: 1px solid var(--line); }
+  .cell-label {
+    font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--faint); margin-bottom: 8px;
+    text-align: center; line-height: 1.4; min-height: 2.6em;
+  }
+  .triptych canvas { display: block; width: 100%; aspect-ratio: 1; }
+
+  .stack .row { padding: 14px 16px 8px; }
+  .stack .row + .row { border-top: 1px solid var(--line); }
+  .row-label {
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .is-old { color: var(--faint); }
+  .is-new { color: var(--amber); }
+  .stack canvas { display: block; width: 100%; height: 96px; }
+  .row-note { font-size: 0.87rem; color: var(--muted); padding: 4px 0 10px; max-width: 50ch; }
+
+  /* the ladder */
+  ol.ladder { list-style: none; display: flex; flex-direction: column; gap: 2px; margin-top: 20px; }
+  ol.ladder li {
+    display: grid; grid-template-columns: 34px 1fr; gap: 14px;
+    padding: 14px 16px; background: var(--card); border: 1px solid var(--line);
+  }
+  ol.ladder li:first-child { border-radius: 3px 3px 0 0; }
+  ol.ladder li:last-child { border-radius: 0 0 3px 3px; }
+  .rung-n {
+    font-family: var(--mono); font-size: 0.9rem; color: var(--faint);
+    font-variant-numeric: tabular-nums; padding-top: 1px;
+  }
+  .rung-t { font-weight: 620; margin-bottom: 2px; }
+  .rung-d { font-size: 0.92rem; color: var(--muted); }
+  li.is-research { border-color: var(--amber); }
+  li.is-research .rung-n { color: var(--amber); }
+  .flag {
+    display: inline-block; font-family: var(--mono); font-size: 0.6rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber);
+    border: 1px solid var(--amber); border-radius: 2px; padding: 1px 5px;
+    margin-left: 8px; vertical-align: 1.5px;
+  }
+
+  .pull {
+    font-family: var(--serif); font-size: clamp(1.2rem, 3.6vw, 1.5rem);
+    line-height: 1.35; color: var(--ink); border-left: 2px solid var(--ice);
+    padding-left: 18px; margin: 22px 0; max-width: 40ch;
+  }
+
+  .scale {
+    display: flex; gap: 0; margin-top: 20px; border: 1px solid var(--line);
+    border-radius: 3px; overflow: hidden; background: var(--card);
+  }
+  .scale div { flex: 1; padding: 14px 12px; text-align: center; }
+  .scale div + div { border-left: 1px solid var(--line); }
+  .scale .v {
+    font-family: var(--mono); font-size: 1.05rem; font-weight: 600;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .scale .k {
+    font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--faint); margin-top: 5px; line-height: 1.4;
+  }
+
+  ul.risks { list-style: none; display: flex; flex-direction: column; gap: 11px; margin-top: 16px; }
+  ul.risks li {
+    display: grid; grid-template-columns: 13px 1fr; gap: 12px;
+    font-size: 0.95rem; color: var(--muted); max-width: 56ch;
+  }
+  ul.risks li::before {
+    content: ""; width: 6px; height: 6px; background: var(--amber);
+    border-radius: 50%; margin-top: 8px;
+  }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 18px; padding-top: 18px;
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--faint);
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+
+  @media (max-width: 540px) {
+    body { font-size: 16px; }
+    .wrap { padding: 38px 18px 60px; }
+    .triptych { grid-template-columns: 1fr; }
+    .cell + .cell { border-left: none; border-top: 1px solid var(--line); }
+    .cell-label { min-height: 0; }
+    .triptych canvas { max-height: 200px; aspect-ratio: auto; height: 180px; }
+    .scale { flex-direction: column; }
+    .scale div + div { border-left: none; border-top: 1px solid var(--line); }
+  }
+</style>
+
+<div class="wrap">
+
+  <header style="padding-bottom: 8px;">
+    <div class="step">Major project &middot; 2026&ndash;27</div>
+    <h1>Shadows into molecules</h1>
+    <p class="lede">
+      We take millions of extremely noisy 2D images of frozen molecules, each
+      photographed at an <strong>unknown random angle</strong>, reconstruct the 3D
+      structure &mdash; and then recover <strong>how the molecule moves</strong>.
+    </p>
+  </header>
+
+  <section>
+    <div class="step">Start here</div>
+    <h2>Proteins are machines, and shape is everything</h2>
+    <p>
+      Proteins are the tiny machines inside every living thing. They digest your
+      food, carry oxygen in your blood, copy your DNA, and fight infections.
+    </p>
+    <p>
+      What a protein <em>does</em> is decided entirely by its <strong>3D shape</strong>.
+      Change the shape and it stops working &mdash; that's what a lot of diseases
+      physically are. Almost every drug works by sticking to a specific shape.
+    </p>
+    <p class="big say">So: if you want the shape, you have to see it.</p>
+  </section>
+
+  <section>
+    <div class="step">The obstacle</div>
+    <h2>They are far too small to see</h2>
+    <p>
+      This isn't a "we need a better microscope" problem. A normal microscope uses
+      light, and light waves are simply too big &mdash; roughly a hundred times
+      wider than the thing you're trying to look at. It's like trying to feel the
+      texture of a coin while wearing boxing gloves.
+    </p>
+
+    <div class="scale">
+      <div><div class="v">~5 nm</div><div class="k">A protein</div></div>
+      <div><div class="v">~500 nm</div><div class="k">One wave of visible light</div></div>
+      <div><div class="v">100&times;</div><div class="k">Too coarse. No lens fixes this.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="step">The workaround</div>
+    <h2>Use electrons instead of light</h2>
+    <p>
+      Electrons behave like waves too, but far, far smaller ones &mdash; small
+      enough to resolve a molecule. So you fire a beam of electrons through the
+      sample and record what comes out the other side.
+    </p>
+    <p>
+      One catch: the electron beam destroys the molecule almost immediately. So
+      first you <strong>freeze everything in ice</strong>, which holds the molecule
+      still and helps it survive the beam a fraction longer.
+    </p>
+    <p>
+      Freezing plus electrons. That's <strong>cryo-EM</strong>, and it won the
+      Nobel Prize in Chemistry in 2017.
+    </p>
+  </section>
+
+  <section>
+    <div class="step">What you actually get</div>
+    <h2>Three problems, all at once</h2>
+
+    <ol class="probs">
+      <li>
+        <span class="n">01</span>
+        <div>
+          <div class="t">It's flat</div>
+          <div class="d">The beam passes straight through, so you get a shadow &mdash; a 2D projection of a 3D object. One whole dimension is gone.</div>
+        </div>
+      </li>
+      <li>
+        <span class="n">02</span>
+        <div>
+          <div class="t">It's buried in noise</div>
+          <div class="d">Because electrons destroy the sample, you use as few as you possibly can. The result is so noisy that you genuinely cannot see the molecule by eye. It looks like TV static.</div>
+        </div>
+      </li>
+      <li>
+        <span class="n">03</span>
+        <div>
+          <div class="t">You don't know the angle</div>
+          <div class="d">Millions of copies of the molecule are frozen in the ice, each tumbled to a random orientation. Nobody recorded which way any of them were facing. You have to work that out too.</div>
+        </div>
+      </li>
+    </ol>
+
+    <figure>
+      <div class="triptych">
+        <div class="cell">
+          <div class="cell-label">The molecule<br />(what we want)</div>
+          <canvas id="c-mol" aria-label="A molecule rotating in three dimensions"></canvas>
+        </div>
+        <div class="cell">
+          <div class="cell-label">Its shadow<br />(clean)</div>
+          <canvas id="c-proj" aria-label="The flat two-dimensional projection of that molecule"></canvas>
+        </div>
+        <div class="cell">
+          <div class="cell-label">What we record<br />(reality)</div>
+          <canvas id="c-noisy" aria-label="The same projection buried in heavy noise, almost invisible"></canvas>
+        </div>
+      </div>
+      <figcaption>
+        The left panel is the answer we're trying to find. The right panel is our
+        only evidence &mdash; and we get millions of those, each at a different
+        unknown angle.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="step">The core idea</div>
+    <h2>One image is useless. Millions are enough.</h2>
+    <p>
+      Any single shadow tells you almost nothing. But a shadow taken from a
+      different angle tells you something different &mdash; and if you have
+      millions of them from every direction, together they pin the 3D shape down
+      completely.
+    </p>
+    <p>
+      The catch is that you must work out the shape <strong>and</strong> the camera
+      angle of every single picture <strong>at the same time</strong>, using
+      nothing but the pictures.
+    </p>
+    <blockquote class="pull">
+      Reconstruct a statue from a million blurry shadows, when nobody wrote down
+      where the camera was standing.
+    </blockquote>
+  </section>
+
+  <section>
+    <div class="step">Part one</div>
+    <h2>Get the shape</h2>
+    <p>
+      This is the classical problem. It's hard, but it's solvable &mdash; that's
+      what the Nobel was for. We build it from scratch anyway, because we need to
+      own every piece of the pipeline before we can change any of it.
+    </p>
+
+    <ol class="ladder">
+      <li>
+        <span class="rung-n">01</span>
+        <div>
+          <div class="rung-t">Fake the data</div>
+          <div class="rung-d">Take a structure we already know, and generate realistic fake cryo-EM images from it. Now we have an answer key to check ourselves against.</div>
+        </div>
+      </li>
+      <li>
+        <span class="rung-n">02</span>
+        <div>
+          <div class="rung-t">Rebuild it &mdash; angles known</div>
+          <div class="rung-d">Cheat slightly: tell the algorithm what angle each image was taken from, and recover the 3D shape. The warm-up.</div>
+        </div>
+      </li>
+      <li>
+        <span class="rung-n">03</span>
+        <div>
+          <div class="rung-t">Rebuild it &mdash; angles unknown</div>
+          <div class="rung-d">Take the cheat away. Now solve for the shape and all the angles together, which is the real problem.</div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="step">Part two</div>
+    <h2>Molecules don't hold still</h2>
+    <p>
+      Here's the thing everyone glosses over. A protein isn't a statue. It hinges,
+      twists, opens and closes. And that motion isn't a nuisance &mdash;
+      <strong>the motion is the job</strong>. A protein that pumps something across
+      a cell membrane does it by physically opening and shutting.
+    </p>
+    <p>
+      Which means every one of your million frozen images caught the molecule at a
+      <em>different moment</em> of that movement. You're not photographing one
+      shape. You're photographing a whole movie, one random frame at a time, out of
+      order.
+    </p>
+    <p class="big say">Recovering that movie is unsolved. That's our research.</p>
+
+    <ol class="ladder">
+      <li class="is-research">
+        <span class="rung-n">04</span>
+        <div>
+          <div class="rung-t">Recover the motion <span class="flag">the research</span></div>
+          <div class="rung-d">Not one shape &mdash; the full range of shapes the molecule moves through, and how common each one is.</div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="step">Our contribution</div>
+    <h2>Everyone is using the wrong ruler</h2>
+    <p>
+      To recover motion, software has to compare shapes and ask "how different are
+      these two?" Every existing method answers that by laying the two shapes on
+      top of each other and <strong>subtracting them point by point</strong>.
+    </p>
+    <p>
+      That sounds reasonable and it is quietly wrong. A molecule changing shape is
+      <strong>material physically moving through space</strong>. Subtraction can't
+      see movement &mdash; it only sees "stuff vanished here, stuff appeared there."
+    </p>
+    <p>Watch what that does:</p>
+
+    <figure>
+      <div class="stack">
+        <div class="row">
+          <div class="row-label is-old">Current methods &middot; subtract and blend</div>
+          <canvas id="c-old" aria-label="A molecule fading out in one position while a copy fades in at another position, like a ghost"></canvas>
+          <div class="row-note">The arm fades out in the old position and fades in at the new one. For a moment there are two half-transparent arms and no real one. It's a crossfade, not a movement.</div>
+        </div>
+        <div class="row">
+          <div class="row-label is-new">Ours &middot; optimal transport</div>
+          <canvas id="c-new" aria-label="The same molecule with its arm physically swinging from one position to the other"></canvas>
+          <div class="row-note">The arm actually swings. Same start, same end, honest motion in between.</div>
+        </div>
+      </div>
+      <figcaption>
+        Optimal transport is the mathematics of moving material from where it is to
+        where it needs to be, as cheaply as possible. Use it as the ruler and
+        distance stops being arbitrary &mdash; it starts meaning something physical.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="step">How we know if it worked</div>
+    <h2>One molecule, two movies, side by side</h2>
+    <p>
+      We run the leading existing method and ours on the same data, and play both
+      results. Theirs dissolves. Ours flows. If someone can see the difference in
+      three seconds without us explaining anything, we've won.
+    </p>
+    <p>
+      There's also a scoreboard: <strong>CryoBench</strong>, a public benchmark
+      where the true answer is known, so our accuracy is a number and not an
+      opinion.
+    </p>
+  </section>
+
+  <section>
+    <div class="step">Honest risks</div>
+    <h2>What could go wrong</h2>
+    <ul class="risks">
+      <li>Optimal transport is entering this field right now. A well-funded lab could publish our idea before we finish.</li>
+      <li>We have to actually beat the existing methods on the benchmark. We might not.</li>
+      <li>Rung 03 &mdash; solving for shape and angles together &mdash; is the time sink. If it runs long, everything after it gets squeezed.</li>
+    </ul>
+    <p style="margin-top:18px">
+      Worth saying: even if rung 04 doesn't beat anyone, a working cryo-EM
+      reconstruction engine built from nothing is already a real project.
+    </p>
+  </section>
+
+  <footer>
+    <span>35 weeks &middot; Aug 2026 &rarr; Apr 2027</span>
+    <span>Full build order &rarr; PLAN.md</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function css(n) {
+    return getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  }
+  function rgb(hex) {
+    hex = (hex || "#888").replace("#", "");
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    var n = parseInt(hex, 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function fit(cv) {
+    var dpr = window.devicePixelRatio || 1;
+    var r = cv.getBoundingClientRect();
+    if (!r.width) return null;
+    cv.width = Math.round(r.width * dpr);
+    cv.height = Math.round(r.height * dpr);
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx: ctx, w: r.width, h: r.height };
+  }
+
+  // ---------- molecule: a lobe plus a hinged arm ----------
+  function buildMolecule() {
+    var pts = [], i;
+    function rnd() { return Math.random() * 2 - 1; }
+    // main body
+    for (i = 0; i < 150; i++) {
+      var x, y, z;
+      do { x = rnd(); y = rnd(); z = rnd(); } while (x*x + y*y + z*z > 1);
+      pts.push({ x: x * 0.30 - 0.10, y: y * 0.30, z: z * 0.30, arm: 0 });
+    }
+    // arm (stored along +x, rotated later)
+    for (i = 0; i < 95; i++) {
+      var t = Math.random();
+      var rr = 0.115 * (1 - 0.35 * t);
+      var a = Math.random() * Math.PI * 2;
+      var c = Math.sqrt(Math.random()) * rr;
+      pts.push({ x: 0.16 + t * 0.44, y: Math.cos(a) * c, z: Math.sin(a) * c, arm: 1 });
+    }
+    return pts;
+  }
+  var MOL = buildMolecule();
+
+  function armed(theta) {
+    var ct = Math.cos(theta), st = Math.sin(theta);
+    return MOL.map(function (p) {
+      if (!p.arm) return p;
+      var x = p.x - 0.10, y = p.y;
+      return { x: (x * ct - y * st) + 0.10, y: x * st + y * ct, z: p.z, arm: 1 };
+    });
+  }
+
+  function rot3(pts, ay, ax) {
+    var cy = Math.cos(ay), sy = Math.sin(ay), cx = Math.cos(ax), sx = Math.sin(ax);
+    return pts.map(function (p) {
+      var x = p.x * cy + p.z * sy;
+      var z = -p.x * sy + p.z * cy;
+      var y = p.y * cx - z * sx;
+      return { x: x, y: y, z: z * cx + p.y * sx };
+    });
+  }
+
+  function splat(ctx, w, h, pts, color, scale, alpha) {
+    var cx = w / 2, cy = h / 2, s = Math.min(w, h) * (scale || 0.82);
+    var sorted = pts.slice().sort(function (a, b) { return a.z - b.z; });
+    for (var i = 0; i < sorted.length; i++) {
+      var p = sorted[i];
+      var px = cx + p.x * s, py = cy - p.y * s;
+      var rad = Math.min(w, h) * 0.055;
+      var g = ctx.createRadialGradient(px, py, 0, px, py, rad);
+      g.addColorStop(0, "rgba(" + color + "," + (0.30 * (alpha === undefined ? 1 : alpha)) + ")");
+      g.addColorStop(1, "rgba(" + color + ",0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(px, py, rad, 0, 6.2832);
+      ctx.fill();
+    }
+  }
+
+  // ---------- figure A : molecule -> shadow -> noise ----------
+  var A = { mol: null, proj: null, noisy: null };
+  var offA = document.createElement("canvas");
+
+  function measureA() {
+    A.mol = fit(document.getElementById("c-mol"));
+    A.proj = fit(document.getElementById("c-proj"));
+    A.noisy = fit(document.getElementById("c-noisy"));
+  }
+
+  function drawA(time) {
+    if (!A.mol || !A.proj || !A.noisy) return;
+    var inkRGB = rgb(css("--ink")).join(",");
+    var iceRGB = rgb(css("--ice")).join(",");
+    var ay = time * 0.55, ax = Math.sin(time * 0.33) * 0.45;
+    var pts = rot3(armed(-0.25), ay, ax);
+
+    // 1. the molecule, in 3D
+    var m = A.mol;
+    m.ctx.clearRect(0, 0, m.w, m.h);
+    splat(m.ctx, m.w, m.h, pts, iceRGB, 0.78, 1);
+
+    // 2. clean shadow — flatten z away
+    var p = A.proj;
+    p.ctx.clearRect(0, 0, p.w, p.h);
+    var flat = pts.map(function (q) { return { x: q.x, y: q.y, z: 0 }; });
+    splat(p.ctx, p.w, p.h, flat, inkRGB, 0.78, 0.85);
+
+    // 3. same shadow, drowned in noise
+    var n = A.noisy;
+    var N = 64;
+    offA.width = N; offA.height = N;
+    var octx = offA.getContext("2d");
+    octx.clearRect(0, 0, N, N);
+    splat(octx, N, N, flat, "255,255,255", 0.78, 1);
+
+    var src = octx.getImageData(0, 0, N, N).data;
+    var out = n.ctx.createImageData(N, N);
+    var base = rgb(css("--card"));
+    for (var i = 0; i < N * N; i++) {
+      var sig = src[i * 4 + 3] / 255;
+      var noise = (Math.random() + Math.random() + Math.random() - 1.5) * 0.62;
+      var v = 0.5 + sig * 0.30 + noise;
+      v = v < 0 ? 0 : v > 1 ? 1 : v;
+      var lum = 40 + v * 175;
+      out.data[i * 4]     = Math.round(base[0] * 0.25 + lum * 0.75);
+      out.data[i * 4 + 1] = Math.round(base[1] * 0.25 + lum * 0.75);
+      out.data[i * 4 + 2] = Math.round(base[2] * 0.25 + lum * 0.75);
+      out.data[i * 4 + 3] = 255;
+    }
+    offA.width = N; offA.height = N;
+    octx.putImageData(out, 0, 0);
+    n.ctx.imageSmoothingEnabled = true;
+    n.ctx.clearRect(0, 0, n.w, n.h);
+    n.ctx.drawImage(offA, 0, 0, n.w, n.h);
+  }
+
+  // ---------- figure B : crossfade vs transport ----------
+  var B = { old: null, nu: null };
+  var CLOSED = -0.30, OPEN = 1.15;
+
+  function measureB() {
+    B.old = fit(document.getElementById("c-old"));
+    B.nu = fit(document.getElementById("c-new"));
+  }
+
+  function drawB(t) {
+    if (!B.old || !B.nu) return;
+    var faintRGB = rgb(css("--faint")).join(",");
+    var amberRGB = rgb(css("--amber")).join(",");
+
+    // crossfade: both end states drawn at once, ghosting
+    var o = B.old;
+    o.ctx.clearRect(0, 0, o.w, o.h);
+    splat(o.ctx, o.w, o.h, armed(CLOSED), faintRGB, 0.62, 1 - t);
+    splat(o.ctx, o.w, o.h, armed(OPEN), faintRGB, 0.62, t);
+
+    // transport: the arm genuinely swings
+    var n = B.nu;
+    n.ctx.clearRect(0, 0, n.w, n.h);
+    splat(n.ctx, n.w, n.h, armed(CLOSED + (OPEN - CLOSED) * t), amberRGB, 0.62, 1);
+  }
+
+  function measureAll() { measureA(); measureB(); }
+  measureAll();
+
+  if (reduced) {
+    drawA(0.8);
+    drawB(0.5);
+  } else {
+    var t0 = null, PERIOD = 4600;
+    (function loop(ts) {
+      if (t0 === null) t0 = ts;
+      var el = (ts - t0) / 1000;
+      var ph = ((ts - t0) % PERIOD) / PERIOD;
+      var t = ph < 0.5 ? ph * 2 : (1 - ph) * 2;
+      t = t * t * (3 - 2 * t);
+      drawA(el);
+      drawB(t);
+      requestAnimationFrame(loop);
+    })(performance.now());
+  }
+
+  var rt;
+  window.addEventListener("resize", function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () {
+      measureAll();
+      if (reduced) { drawA(0.8); drawB(0.5); }
+    }, 150);
+  });
+
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  if (mq.addEventListener) {
+    mq.addEventListener("change", function () {
+      if (reduced) { drawA(0.8); drawB(0.5); }
+    });
+  }
+  new MutationObserver(function () {
+    if (reduced) { drawA(0.8); drawB(0.5); }
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
